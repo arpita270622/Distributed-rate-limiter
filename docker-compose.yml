@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Two instances of the SAME service, both talking to ONE Redis.
+  # This is what makes the demo "distributed": run load against both and show
+  # the shared Redis state enforces a single global limit. This is the whole
+  # point of the project — screenshot/GIF this for your README.
+  ratelimiter-1:
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - PORT=3000
+    ports:
+      - "3001:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  ratelimiter-2:
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - PORT=3000
+    ports:
+      - "3002:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
